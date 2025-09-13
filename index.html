@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Clock with Weather</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+    <style>
+        .toggle-buttons {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="heroo" id="main">
+        <div class="toggle-buttons">
+            <button class="toggle-btn" id="theme-btn" onclick="toggleMode()">🌗 Toggle Theme</button>
+<button class="toggle-btn" id="sound-btn" onclick="toggleSound()">🔊 Sound ON</button>
+
+
+        </div>
+
+        <h1 id="greeting">Hello</h1>
+        <p id="quote">Loading...</p>
+
+        <div class="container">
+            <div class="clock">
+                <span id="hours">00</span><span class="colon">:</span>
+                <span id="minutes">00</span><span class="colon">:</span>
+                <span id="seconds">00</span>
+            </div>
+        </div>
+
+        <p id="date"></p>
+        <div id="weather">Fetching weather...</div>
+    </div>
+    <div class="world-clock-panel">
+        <h2>🌍 World Clock</h2>
+       
+      
+    <script>
+        const hours = document.getElementById("hours");
+        const minutes = document.getElementById("minutes");
+        const seconds = document.getElementById("seconds");
+        const greeting = document.getElementById("greeting");
+        const date = document.getElementById("date");
+        const quote = document.getElementById("quote");
+
+        const quotes = [
+            "Believe in yourself ✨",
+            "Every moment matters ⏳",
+            "Consistency is key 🔑",
+            "Push yourself 🔥",
+            "You’re doing great 🚀"
+        ];
+
+        // Ticking sound
+        let ticking = new Audio("seconds.mp3");
+        ticking.volume = 0.5;
+        let soundOn = true;
+
+        function playTick() {
+            if (soundOn) {
+                ticking.currentTime = 0;
+                ticking.play();
+            } else {
+                ticking.pause(); // This line ensures sound stops if sound is OFF
+            }
+        }
+        
+
+        
+
+        function updateClock() {
+            const now = new Date();
+            let h = now.getHours();
+            let m = now.getMinutes();
+            let s = now.getSeconds();
+
+            hours.innerText = h < 10 ? "0" + h : h;
+            minutes.innerText = m < 10 ? "0" + m : m;
+            seconds.innerText = s < 10 ? "0" + s : s;
+
+            if (h < 12) {
+                greeting.innerText = "Good Morning 🌞";
+            } else if (h < 18) {
+                greeting.innerText = "Good Afternoon ☀️";
+            } else {
+                greeting.innerText = "Good Evening 🌙";
+            }
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            date.innerText = now.toLocaleDateString("en-US", options);
+
+            seconds.classList.remove("pop");
+            void seconds.offsetWidth;
+            seconds.classList.add("pop");
+        }
+
+        function showQuote() {
+            quote.classList.remove("show");
+            void quote.offsetWidth;
+            quote.innerText = quotes[Math.floor(Math.random() * quotes.length)];
+            quote.classList.add("show");
+        }
+
+        function toggleMode() {
+            document.getElementById("main").classList.toggle("light-mode");
+        }
+
+        function fetchWeather(lat, lon) {
+            const apiKey = "df5c84ad1ca562d36e4e08c8306900bd";
+            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    const temp = Math.round(data.main.temp);
+                    const city = data.name;
+                    const condition = data.weather[0].main;
+                    const emoji = getEmoji(condition);
+                    document.getElementById("weather").innerText = `${emoji} ${city} - ${temp}°C, ${condition}`;
+                })
+                .catch(err => {
+                    document.getElementById("weather").innerText = "Unable to fetch weather 🌍";
+                    console.error("Weather error:", err);
+                });
+        }
+
+        function getEmoji(condition) {
+            const map = {
+                "Clear": "☀️",
+                "Clouds": "☁️",
+                "Rain": "🌧️",
+                "Drizzle": "🌦️",
+                "Thunderstorm": "⛈️",
+                "Snow": "❄️",
+                "Mist": "🌫️"
+            };
+            return map[condition] || "🌍";
+        }
+        function savePreferences() {
+            localStorage.setItem('theme', document.getElementById("main").classList.contains("light-mode") ? 'light' : 'dark');
+            localStorage.setItem('sound', soundOn ? 'on' : 'off');
+        }
+        
+        function loadPreferences() {
+            const theme = localStorage.getItem('theme');
+            const sound = localStorage.getItem('sound');
+            const main = document.getElementById("main");
+        
+            if (theme === 'light') {
+                main.classList.add("light-mode");
+                document.getElementById("theme-btn").innerText = "🌞 Light Mode";
+            } else {
+                document.getElementById("theme-btn").innerText = "🌙 Dark Mode";
+            }
+        
+            if (sound === 'off') {
+                soundOn = false;
+                document.getElementById("sound-btn").innerText = "🔇 Sound OFF";
+            } else {
+                document.getElementById("sound-btn").innerText = "🔊 Sound ON";
+            }
+        }
+        
+        
+        function toggleMode() {
+            const main = document.getElementById("main");
+            const themeBtn = document.getElementById("theme-btn");
+        
+            main.classList.toggle("light-mode");
+        
+            // Update icon and text
+            if (main.classList.contains("light-mode")) {
+                themeBtn.innerText = "🌞 Light Mode";
+            } else {
+                themeBtn.innerText = "🌙 Dark Mode";
+            }
+        
+            savePreferences();
+        }
+        
+        function toggleSound() {
+            soundOn = !soundOn;
+            const soundBtn = document.getElementById("sound-btn");
+        
+            if (soundOn) {
+                soundBtn.innerText = "🔊 Sound ON";
+            } else {
+                soundBtn.innerText = "🔇 Sound OFF";
+            }
+        
+            savePreferences();
+        }
+       
+        window.onload = () => {
+            loadPreferences();
+            updateClock();
+            setInterval(() => {
+                updateClock();
+                playTick();
+            }, 1000);
+
+            showQuote();
+            setInterval(showQuote, 60000);
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
+                        fetchWeather(lat, lon);
+                    },
+                    err => {
+                        document.getElementById("weather").innerText = "Location access denied 🌍";
+                    }
+                );
+            } else {
+                document.getElementById("weather").innerText = "Geolocation not supported ❌";
+            }
+
+
+        };
+    </script>
+</body>
+</html>
